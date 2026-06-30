@@ -14,25 +14,72 @@ import { PerMealBreakdown } from '@/components/simulator/PerMealBreakdown'
 import { calcolaSimulazione, getScenario } from '@/lib/simulator-engine'
 import type { ScenarioId, SimulatorInputs } from '@/lib/simulator-types'
 
+const STORAGE_PREFIX = 'fitfast:simulator-inputs:'
+
+function getScenarioStorageKey(id: ScenarioId) {
+  return `${STORAGE_PREFIX}${id}`
+}
+
+function loadScenarioInputs(id: ScenarioId): SimulatorInputs {
+  const defaults = getScenario(id).defaults
+
+  if (typeof window === 'undefined') {
+    return defaults
+  }
+
+  try {
+    const saved = window.localStorage.getItem(getScenarioStorageKey(id))
+    if (!saved) {
+      return defaults
+    }
+
+    const parsed = JSON.parse(saved) as Partial<SimulatorInputs>
+    return { ...defaults, ...parsed }
+  } catch {
+    return defaults
+  }
+}
+
+function saveScenarioInputs(id: ScenarioId, inputs: SimulatorInputs) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(getScenarioStorageKey(id), JSON.stringify(inputs))
+}
+
+function clearScenarioInputs(id: ScenarioId) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.removeItem(getScenarioStorageKey(id))
+}
+
 export default function SimulatorePage() {
   const [scenarioId, setScenarioId] = useState<ScenarioId>('completo')
   const [inputs, setInputs] = useState<SimulatorInputs>(
-    () => getScenario('completo').defaults
+    () => loadScenarioInputs('completo')
   )
 
   const handleScenarioChange = useCallback((id: ScenarioId) => {
     setScenarioId(id)
-    setInputs(getScenario(id).defaults)
+    setInputs(loadScenarioInputs(id))
   }, [])
 
   const handleInputChange = useCallback(
     (key: keyof SimulatorInputs, value: number) => {
-      setInputs((prev) => ({ ...prev, [key]: value }))
+      setInputs((prev) => {
+        const next = { ...prev, [key]: value }
+        saveScenarioInputs(scenarioId, next)
+        return next
+      })
     },
-    []
+    [scenarioId]
   )
 
   const handleReset = useCallback(() => {
+    clearScenarioInputs(scenarioId)
     setInputs(getScenario(scenarioId).defaults)
   }, [scenarioId])
 
