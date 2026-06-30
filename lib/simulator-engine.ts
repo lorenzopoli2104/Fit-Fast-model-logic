@@ -184,7 +184,6 @@ export function calcolaSimulazione(inp: SimulatorInputs): SimulatorResults {
   // 2. Volume
   const pastiMensili = inp.pastiGiornalieriMedi * inp.giorniOperativiMese
   const ordiniDeliveryMensili = pastiMensili * (inp.mixDeliveryPercentuale / 100)
-  const ordiniInstoreMensili = pastiMensili - ordiniDeliveryMensili
 
   // 3. Premium surcharge revenue
   const ricavoExtraPremiumPerPasto =

@@ -11,7 +11,7 @@ import { RiskAlerts } from '@/components/simulator/RiskAlerts'
 import { PLTable } from '@/components/simulator/PLTable'
 import { InvestorSummary } from '@/components/simulator/InvestorSummary'
 import { PerMealBreakdown } from '@/components/simulator/PerMealBreakdown'
-import { calcolaSimulazione, getScenario, SCENARI } from '@/lib/simulator-engine'
+import { calcolaSimulazione, getScenario } from '@/lib/simulator-engine'
 import type { ScenarioId, SimulatorInputs } from '@/lib/simulator-types'
 
 export default function SimulatorePage() {
@@ -40,7 +40,7 @@ export default function SimulatorePage() {
   const results = calcolaSimulazione(inputs)
 
   return (
-    <TooltipProvider delayDuration={300}>
+    <TooltipProvider delay={300}>
       <div className="min-h-screen bg-background">
         {/* Top header */}
         <header className="border-b border-border bg-card sticky top-0 z-30">
@@ -174,7 +174,7 @@ export default function SimulatorePage() {
 
                   <TabsContent value="operativo">
                     <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-                      <OperativeDetails results={results} inputs={inputs} />
+                      <OperativeDetails inputs={inputs} />
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -205,10 +205,8 @@ export default function SimulatorePage() {
 
 // ─── Operative details tab content ────────────────────────────────────────────
 function OperativeDetails({
-  results,
   inputs,
 }: {
-  results: ReturnType<typeof calcolaSimulazione>
   inputs: SimulatorInputs
 }) {
   const mixCustom = 100 - inputs.mixPiattiPrebilanciatiPerc
