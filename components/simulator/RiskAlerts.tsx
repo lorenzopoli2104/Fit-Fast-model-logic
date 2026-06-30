@@ -1,6 +1,5 @@
 'use client'
 
-import { cn } from '@/lib/utils'
 import type { RiskItem } from '@/lib/simulator-types'
 
 interface RiskAlertsProps {

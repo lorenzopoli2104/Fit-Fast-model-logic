@@ -1,7 +1,6 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Separator } from '@/components/ui/separator'
 import type { SimulatorInputs, SimulatorResults } from '@/lib/simulator-types'
 
 interface PLTableProps {
