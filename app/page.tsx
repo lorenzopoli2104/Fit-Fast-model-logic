@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -12,31 +12,102 @@ import { PLTable } from '@/components/simulator/PLTable'
 import { InvestorSummary } from '@/components/simulator/InvestorSummary'
 import { PerMealBreakdown } from '@/components/simulator/PerMealBreakdown'
 import { calcolaSimulazione, getScenario, SCENARI } from '@/lib/simulator-engine'
-import type { ScenarioId, SimulatorInputs } from '@/lib/simulator-types'
+import type { ScenarioId, SimulatorInputs, StatoSimulatore } from '@/lib/simulator-types'
+
+const STORAGE_KEY = 'fitfast-sim-v1'
+
+// Fields shared by all scenarios; every other input is scenario-specific
+const CAMPI_GLOBALI = new Set<keyof SimulatorInputs>([
+  'ivaPercentuale',
+  'giorniOperativiMese',
+])
+
+function statoIniziale(): StatoSimulatore {
+  const defaults = getScenario('completo').defaults
+  return {
+    scenarioAttivo: 'completo',
+    globali: {
+      ivaPercentuale: defaults.ivaPercentuale,
+      giorniOperativiMese: defaults.giorniOperativiMese,
+    },
+    perScenario: {},
+  }
+}
 
 export default function SimulatorePage() {
-  const [scenarioId, setScenarioId] = useState<ScenarioId>('completo')
-  const [inputs, setInputs] = useState<SimulatorInputs>(
-    () => getScenario('completo').defaults
-  )
+  const [stato, setStato] = useState<StatoSimulatore>(statoIniziale)
+  const [idratato, setIdratato] = useState(false)
+
+  // Hydrate from localStorage after mount to avoid SSR hydration mismatch
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        const salvato = JSON.parse(raw) as Partial<StatoSimulatore>
+        setStato((prev) => ({
+          scenarioAttivo: SCENARI.some((s) => s.id === salvato.scenarioAttivo)
+            ? (salvato.scenarioAttivo as ScenarioId)
+            : prev.scenarioAttivo,
+          globali: { ...prev.globali, ...salvato.globali },
+          perScenario: salvato.perScenario ?? prev.perScenario,
+        }))
+      }
+    } catch {
+      // Saved state unreadable: keep defaults
+    }
+    setIdratato(true)
+  }, [])
+
+  useEffect(() => {
+    if (!idratato) return
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stato))
+    } catch {
+      // Storage unavailable (private mode, quota): simulator still works in-memory
+    }
+  }, [stato, idratato])
 
   const handleScenarioChange = useCallback((id: ScenarioId) => {
-    setScenarioId(id)
-    setInputs(getScenario(id).defaults)
+    setStato((prev) => ({ ...prev, scenarioAttivo: id }))
   }, [])
 
   const handleInputChange = useCallback(
     (key: keyof SimulatorInputs, value: number) => {
-      setInputs((prev) => ({ ...prev, [key]: value }))
+      setStato((prev) => {
+        if (CAMPI_GLOBALI.has(key)) {
+          return { ...prev, globali: { ...prev.globali, [key]: value } }
+        }
+        return {
+          ...prev,
+          perScenario: {
+            ...prev.perScenario,
+            [prev.scenarioAttivo]: {
+              ...prev.perScenario[prev.scenarioAttivo],
+              [key]: value,
+            },
+          },
+        }
+      })
     },
     []
   )
 
+  // Clears only the active scenario's overrides; globals stay as the user set them
   const handleReset = useCallback(() => {
-    setInputs(getScenario(scenarioId).defaults)
-  }, [scenarioId])
+    setStato((prev) => {
+      const perScenario = { ...prev.perScenario }
+      delete perScenario[prev.scenarioAttivo]
+      return { ...prev, perScenario }
+    })
+  }, [])
 
+  const scenarioId = stato.scenarioAttivo
   const scenario = getScenario(scenarioId)
+  const inputs: SimulatorInputs = {
+    ...scenario.defaults,
+    ...stato.globali,
+    ...stato.perScenario[scenarioId],
+  }
   const results = calcolaSimulazione(inputs)
 
   return (

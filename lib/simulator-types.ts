@@ -72,6 +72,16 @@ export interface RiskItem {
   messaggio: string
 }
 
+// ─── Simulator state (active scenario + globals + per-scenario overrides) ──────
+export interface StatoSimulatore {
+  scenarioAttivo: ScenarioId
+  globali: {
+    ivaPercentuale: number
+    giorniOperativiMese: number
+  }
+  perScenario: Partial<Record<ScenarioId, Partial<SimulatorInputs>>>
+}
+
 // ─── Scenario default configs ───────────────────────────────────────────────────
 export interface ScenarioConfig {
   id: ScenarioId
