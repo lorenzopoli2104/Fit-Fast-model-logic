@@ -49,7 +49,7 @@ export interface SimulatorResults {
   cogsEffettivoPerPasto: number       // COGS totale per pasto (ingredienti + imballaggio + scarto)
   cogsPercentuale: number             // COGS % su ricavo netto
   // Delivery economics
-  costoDeliveryTotalePerOrdine: number // Commissione + imballaggio delivery
+  commissioneDeliveryPerOrdine: number // Commissione piattaforma per ordine (l'imballaggio delivery è già incluso nel COGS)
   impactoDeliveryMensile: number       // Impatto costi delivery mensile
   // Labor & prime cost
   costoLavoroPerPasto: number
