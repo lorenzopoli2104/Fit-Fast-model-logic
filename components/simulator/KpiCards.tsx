@@ -269,7 +269,11 @@ export function KpiCards({ results, inputs }: KpiCardsProps) {
       />
       <KpiCard
         titolo="Break-even Giornaliero"
-        valore={`${results.breakEvenPastiGiorno.toFixed(0)} pasti`}
+        valore={
+          Number.isFinite(results.breakEvenPastiGiorno)
+            ? `${results.breakEvenPastiGiorno.toFixed(0)} pasti`
+            : 'Non raggiungibile'
+        }
         sottotitolo={`Target attuale: ${inputs.pastiGiornalieriMedi} pasti/g`}
         status={beSt}
         progresso={Math.min(results.breakEvenPastiGiorno, 150)}

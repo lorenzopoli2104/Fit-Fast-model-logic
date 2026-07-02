@@ -55,7 +55,7 @@ export function PerMealBreakdown({ results, inputs }: PerMealBreakdownProps) {
     (inputs.mixDeliveryPercentuale / 100) * inputs.imballaggioDelivery
 
   const deliveryPerPasto =
-    results.costoDeliveryTotalePerOrdine * (inputs.mixDeliveryPercentuale / 100)
+    results.commissioneDeliveryPerOrdine * (inputs.mixDeliveryPercentuale / 100)
 
   const costoLavoroPerPasto = inputs.costoLavoro / (inputs.pastiGiornalieriMedi * inputs.giorniOperativiMese)
   const altriCostiPerPasto =

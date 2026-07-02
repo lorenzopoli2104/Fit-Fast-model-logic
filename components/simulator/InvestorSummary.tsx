@@ -194,7 +194,11 @@ export function InvestorSummary({ scenario, results, inputs }: InvestorSummaryPr
         />
         <MetricRow
           label="Break-even giornaliero"
-          valore={`${results.breakEvenPastiGiorno.toFixed(0)} pasti/g`}
+          valore={
+            Number.isFinite(results.breakEvenPastiGiorno)
+              ? `${results.breakEvenPastiGiorno.toFixed(0)} pasti/g`
+              : 'Non raggiungibile'
+          }
           sub={`Attuale target: ${inputs.pastiGiornalieriMedi} pasti/g`}
           status={beStatus}
         />

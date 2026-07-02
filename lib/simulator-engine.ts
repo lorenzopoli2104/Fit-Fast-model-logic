@@ -211,8 +211,8 @@ export function calcolaSimulazione(inp: SimulatorInputs): SimulatorResults {
   const cogsPercentuale = (cogsEffettivoPerPasto / ricavoNettoPerPasto) * 100
 
   // 6. Delivery costs monthly
-  const costoDeliveryTotalePerOrdine = inp.commissioneDelivery
-  const impactoDeliveryMensile = costoDeliveryTotalePerOrdine * ordiniDeliveryMensili
+  const commissioneDeliveryPerOrdine = inp.commissioneDelivery
+  const impactoDeliveryMensile = commissioneDeliveryPerOrdine * ordiniDeliveryMensili
 
   // 7. Prime cost per meal
   const costoLavoroPerPasto = inp.costoLavoro / pastiMensili
@@ -232,7 +232,7 @@ export function calcolaSimulazione(inp: SimulatorInputs): SimulatorResults {
 
   // 9. Break-even (pasti/giorno)
   const contribuzioneNettaPerPasto =
-    ricavoNettoAdjPerPasto - cogsEffettivoPerPasto - costoDeliveryTotalePerOrdine * (inp.mixDeliveryPercentuale / 100)
+    ricavoNettoAdjPerPasto - cogsEffettivoPerPasto - commissioneDeliveryPerOrdine * (inp.mixDeliveryPercentuale / 100)
   const breakEvenPastiMese =
     contribuzioneNettaPerPasto > 0
       ? costiFissiTotali / contribuzioneNettaPerPasto
@@ -260,13 +260,15 @@ export function calcolaSimulazione(inp: SimulatorInputs): SimulatorResults {
     risks.push({ livello: 'attenzione', messaggio: `Margine EBITDA ${ebitdaMarginPerc.toFixed(1)}% — alto rischio. Target minimo: 10%.` })
   }
 
-  if (breakEvenPastiGiorno > 130) {
+  if (!Number.isFinite(breakEvenPastiGiorno)) {
+    risks.push({ livello: 'critico', messaggio: `Break-even non raggiungibile — la contribuzione per pasto è nulla o negativa con questi parametri.` })
+  } else if (breakEvenPastiGiorno > 130) {
     risks.push({ livello: 'critico', messaggio: `Break-even a ${breakEvenPastiGiorno.toFixed(0)} pasti/giorno — troppo alto per il primo punto vendita.` })
   } else if (breakEvenPastiGiorno > 100) {
     risks.push({ livello: 'attenzione', messaggio: `Break-even a ${breakEvenPastiGiorno.toFixed(0)} pasti/giorno — difficile da raggiungere in avvio.` })
   }
 
-  if (inp.mixDeliveryPercentuale <= 70 && inp.mixDeliveryPercentuale > 40) {
+  if (inp.mixDeliveryPercentuale > 40 && inp.mixDeliveryPercentuale < 100) {
     risks.push({ livello: 'attenzione', messaggio: `Mix delivery ${inp.mixDeliveryPercentuale}% — alto per un modello fisico. Valutare aumento del ticket delivery.` })
   }
 
@@ -291,7 +293,7 @@ export function calcolaSimulazione(inp: SimulatorInputs): SimulatorResults {
     risks.push({ livello: 'attenzione', messaggio: `Imballaggio in-store €${imballaggioBasePerPasto.toFixed(2)} — sopra la soglia di attenzione (€0.80).` })
   }
 
-  if (imballaggioMedioPerPasto - imballaggioBasePerPasto > 1.10 && inp.mixDeliveryPercentuale > 0) {
+  if (inp.imballaggioDelivery > 1.10 && inp.mixDeliveryPercentuale > 0) {
     risks.push({ livello: 'attenzione', messaggio: `Imballaggio delivery €${inp.imballaggioDelivery.toFixed(2)} extra — sopra la soglia di attenzione (€1.10).` })
   }
 
@@ -302,7 +304,7 @@ export function calcolaSimulazione(inp: SimulatorInputs): SimulatorResults {
     costoScartoEffettivo,
     cogsEffettivoPerPasto,
     cogsPercentuale,
-    costoDeliveryTotalePerOrdine,
+    commissioneDeliveryPerOrdine,
     impactoDeliveryMensile,
     costoLavoroPerPasto,
     primeCostPerPasto,
